@@ -1,0 +1,45 @@
+name: Publish reviewed preview
+on:
+  push:
+    branches: [gh-pages]
+    paths: ['.github/workflows/install-reviewed.yml']
+  workflow_call:
+permissions:
+  contents: write
+  pages: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install verified public HTML
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,base64,lzma,json,hashlib,pathlib,os,subprocess,time
+          root='https://raw.githubusercontent.com/SharpSites-Demo/fitness-freak-gym-govindpuri-demo/7ac317d433df196556c1d9d10747ef0779dfad9c/_source/'
+          b=''.join(urllib.request.urlopen(root+'sites.part'+str(i)+'.b64',timeout=30).read().decode().strip() for i in (1,2))
+          assert hashlib.sha256(b.encode()).hexdigest()=='f7a7e430e238e57d45733e6d4c47fbae2f6070d4943ef08db6a8b24e85203681'
+          raw=lzma.decompress(base64.b64decode(b,validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='d01babad3f9d5fcd544dd1f6aa61c7cfbe7c1b13e29b181881ecd0707ca525c7'
+          slug=os.environ['GITHUB_REPOSITORY'].split('/')[1]
+          html=json.loads(raw)[slug].encode()
+          pathlib.Path('index.html').write_bytes(html)
+          pathlib.Path('.nojekyll').write_text('')
+          print('EXACT_HTML_SHA256',hashlib.sha256(html).hexdigest())
+          for cmd in [['git','config','user.name','SharpSites Publisher'],['git','config','user.email','publisher@users.noreply.github.com'],['git','add','index.html','.nojekyll']]: subprocess.run(cmd,check=True)
+          if subprocess.run(['git','diff','--cached','--quiet']).returncode:
+              subprocess.run(['git','commit','-m','Publish exact reviewed static preview'],check=True)
+              subprocess.run(['git','push','origin','HEAD:gh-pages'],check=True)
+          u='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/pages/builds'
+          for i in range(5):
+              try:
+                  req=urllib.request.Request(u,data=b'{}',method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+                  with urllib.request.urlopen(req,timeout=30) as r: print('PAGES_BUILD',r.status)
+                  break
+              except urllib.error.HTTPError as e:
+                  if e.code==409 and i<4: time.sleep(12); continue
+                  raise
+          PY

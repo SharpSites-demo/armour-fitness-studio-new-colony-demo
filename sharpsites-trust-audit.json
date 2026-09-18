@@ -1,0 +1,14 @@
+{
+  "version": "2026-09-18-trust-v1",
+  "business": "Armour Fitness Studio",
+  "source": "https://www.google.com/maps/search/?api=1&query=Armour%20Fitness%20Studio&query_place_id=ChIJ4TbFqgZhDDkR_o5sW6u--i8",
+  "rating": 4.8,
+  "review_count": 180,
+  "checked_on": "2026-09-18",
+  "quoted_reviews": 2,
+  "quoted_words": 14,
+  "hero": "text-led; business photos have not been visually verified",
+  "original_sha256": "8a690625d953194a32645402353708b185353eaefb61896a3ce37a268ba5c969",
+  "updated_sha256": "2a9abc711b1bc89f75a3ef0c8ddef9306e6481ff1d49395e7f095e3c377c110a",
+  "contact_destinations_preserved": true
+}
